@@ -49,7 +49,7 @@ namespace BMC.Aquascape2
             this.InitializeComponent();
             Setup();
             this.timer = new DispatcherTimer();
-            this.timer.Interval = TimeSpan.FromMilliseconds(3000); //1 minutes
+            this.timer.Interval = TimeSpan.FromMilliseconds(5*60*1000); //1 minutes
             this.timer.Tick += this.OnTick;
             this.timer.Start();
         }
