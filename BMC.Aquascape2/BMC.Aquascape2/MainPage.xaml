@@ -9,6 +9,6 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-
+        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="40" Text="AQUASCAPE REMOTE CONTROLLER"></TextBlock>
     </Grid>
 </Page>

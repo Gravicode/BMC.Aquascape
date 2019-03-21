@@ -21,6 +21,7 @@ using Microsoft.Azure.Devices.Client;
 using System.Text;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Net;
 
 namespace BMC.Aquascape2
 {
@@ -30,6 +31,7 @@ namespace BMC.Aquascape2
     public sealed partial class MainPage : Page
     {
         private DispatcherTimer timer;
+        private DispatcherTimer timer2;
 
         IUltrasonicRangerSensor distance = DeviceFactory.Build.UltraSonicSensor(Pin.DigitalPin7);
 
@@ -52,6 +54,11 @@ namespace BMC.Aquascape2
             this.timer.Interval = TimeSpan.FromMilliseconds(5*60*1000); //1 minutes
             this.timer.Tick += this.OnTick;
             this.timer.Start();
+
+            this.timer2 = new DispatcherTimer();
+            this.timer2.Interval = TimeSpan.FromMilliseconds(2000); //1 minutes
+            this.timer2.Tick += this.OnTick2;
+            this.timer2.Start();
         }
         private static async void SendDeviceToCloudMessagesAsync(dynamic data)
         {
@@ -86,6 +93,19 @@ namespace BMC.Aquascape2
                 IsConnected = false;
             }
         }
+        private async void OnTick2(object sender, object e)
+        {
+            try
+            {
+
+                display.SetText($"water: {distance.MeasureInCentimeters()} cm");
+
+            }
+            catch
+            {
+
+            }
+        }
         void Setup()
         {
             try
@@ -101,7 +121,8 @@ namespace BMC.Aquascape2
                     s_deviceClient.SetMethodHandlerAsync("DoAction", DoAction, null).Wait();
                     //SendDeviceToCloudMessagesAsync();
                
-
+                    display.SetBacklightRgb(0, 200, 100);
+                    display.SetText("Device is Ready");
                     IsConnected = true;
                 }
                 
@@ -132,12 +153,14 @@ namespace BMC.Aquascape2
                         {
                             var res = bool.Parse(action.Params[0]);
                             WaterInRelay.ChangeState(res ? SensorStatus.On : SensorStatus.Off);
+                            display.SetText("WATER IN :" + res);
                         }
                         break;
                     case "WaterOut":
                         {
                             var res = bool.Parse(action.Params[0]);
                             WaterOutRelay.ChangeState(res ? SensorStatus.On : SensorStatus.Off);
+                            display.SetText("WATER OUT :" + res);
                         }
                         break;
                 }
@@ -152,7 +175,18 @@ namespace BMC.Aquascape2
                 return new MethodResponse(Encoding.UTF8.GetBytes(result), 400);
             }
         }
-
+        public IPAddress GetIPAddress()
+        {
+            List<string> IpAddress = new List<string>();
+            var Hosts = Windows.Networking.Connectivity.NetworkInformation.GetHostNames().ToList();
+            foreach (var Host in Hosts)
+            {
+                string IP = Host.DisplayName;
+                IpAddress.Add(IP);
+            }
+            IPAddress address = IPAddress.Parse(IpAddress.Last());
+            return address;
+        }
         void Testing()
         {
             while (true)
