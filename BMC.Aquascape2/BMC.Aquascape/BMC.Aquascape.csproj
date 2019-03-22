@@ -54,6 +54,18 @@
       <Project>{97f3dbe3-87d6-479c-b609-90ce97fa2ec3}</Project>
       <Name>BMC.LowLevelDrivers</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Unosquare.RaspberryIO\Unosquare.RaspberryIO.csproj">
+      <Project>{650264A9-4E1E-49A8-9C4E-3268FFF7257A}</Project>
+      <Name>Unosquare.RaspberryIO</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Unosquare.Swan.Lite\Unosquare.Swan.Lite.csproj">
+      <Project>{2e17bd80-267c-4162-8aca-2e6a73a21264}</Project>
+      <Name>Unosquare.Swan.Lite</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Unosquare.Swan\Unosquare.Swan.csproj">
+      <Project>{890bfdb5-3f79-470c-b2d7-fbf0f46c4365}</Project>
+      <Name>Unosquare.Swan</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
