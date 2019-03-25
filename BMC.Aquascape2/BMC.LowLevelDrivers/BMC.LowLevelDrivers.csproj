@@ -42,7 +42,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ADS1115.cs" />
+    <Compile Include="ADS1115Device.cs" />
+    <Compile Include="ADS1115_Constants.cs" />
+    <Compile Include="Bcd.cs" />
+    <Compile Include="ByteExtensions.cs" />
+    <Compile Include="ChannelReadingDone.cs" />
     <Compile Include="DS1307.cs" />
+    <Compile Include="IADS1115Device.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

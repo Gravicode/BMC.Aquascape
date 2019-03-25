@@ -16,6 +16,12 @@ namespace BMC.LowLevelDrivers
 
         #region Constants... 
 
+        private const byte I2C_ADDRESS = 0x68;
+        private const byte RTC_ADDRESS = 0x00;
+        private const byte CONTROL_ADDRESS = 0x07;
+        private const byte MEMORY_ADDRESS = 0x08;
+        private const byte MEMORY_SIZE = 56;
+
         private const byte ADDRESS = 0x68;                                        // 1101000 (see on datasheet) 
         private const int CLOCK_RATE_KHZ = 100;                                     // DS1307 works only in I2C standard mode (100 Khz) 
 
@@ -83,7 +89,28 @@ namespace BMC.LowLevelDrivers
         }
 
         #endregion
+        /// <summary>
+        /// Sets the Date and Time on the DS1307.
+        /// </summary>
+        /// <param name="value">The date and time as a System.DateTime object
+        /// that will be saved on the DS1307.</param>
+        public async Task SetDateAsync(DateTime value)
+        {
+            byte[] writeBuffer = new byte[]
+            {
+                //RTC_ADDRESS,
+                Bcd.FromInt(value.Second),
+                Bcd.FromInt(value.Minute),
+                Bcd.FromInt(value.Hour),
+                Bcd.FromInt((int)value.DayOfWeek),
+                Bcd.FromInt(value.Day),
+                Bcd.FromInt(value.Month),
+                Bcd.FromInt(value.Year >= 2000 ? value.Year - 2000: 0),
+            };
 
+            await this.i2c.WriteAsync(RTC_ADDRESS, writeBuffer);
+        }
+        /*
         /// <summary> 
         /// Get date and time from RTC 
         /// </summary> 
@@ -135,8 +162,33 @@ namespace BMC.LowLevelDrivers
             dateTime = new DateTime(year, month, date, hour, minute, second);
 
             return dateTime;
-        }
+        }*/
+        /// <summary>
+        /// Get the current Date and Time from the DS1307.
+        /// </summary>
+        /// <returns>The current date and time as a System.DateTime object.</returns>
+        public Task<DateTime> GetDateAsync()
+        {
+            DateTime returnValue = DateTime.MinValue;
 
+            byte[] readBuffer = new byte[7];
+            byte[] writeBuffer = new byte[] { RTC_ADDRESS };
+
+            this.i2c.ReadBytes(RTC_ADDRESS, (byte)readBuffer.Length, readBuffer);
+
+            returnValue = new DateTime
+            (
+                Bcd.ToInt(readBuffer[6]) + 2000,            // Year
+                Bcd.ToInt(readBuffer[5]),                   // Month
+                Bcd.ToInt(readBuffer[4]),                   // Day
+                Bcd.ToInt((byte)(readBuffer[2] & 0x3f)),    // Hours over 24 hours (bit 6 is 24/12 hour format; 1 = 12, 0 = 24)
+                Bcd.ToInt(readBuffer[1]),                   // Minutes
+                Bcd.ToInt((byte)(readBuffer[0] & 0x7f))     // Seconds (bit 7 is the clock halt bit; 0 = enabled, 1 = halted)
+            );
+
+            return Task<DateTime>.FromResult(returnValue);
+        }
+        /*
         /// <summary> 
         /// Set date and time on RTC 
         /// </summary> 
@@ -188,7 +240,7 @@ namespace BMC.LowLevelDrivers
             this.ramData[0] = (byte)((year / 10) << 4);
             this.ramData[0] |= (byte)(year % 10);
             this.WriteRam(this.ramAddress, this.ramData);
-        }
+        }*/
 
         /// <summary> 
         /// Configure SquareWave output pin behaviour 
@@ -242,6 +294,7 @@ namespace BMC.LowLevelDrivers
         {
             this.i2c.WriteBytes(address[0],1,address);
             this.i2c.ReadBytes(address[0],1,data);
+            
             /*
             I2CDevice.I2CTransaction[] i2cTx = new I2CDevice.I2CTransaction[2];
 

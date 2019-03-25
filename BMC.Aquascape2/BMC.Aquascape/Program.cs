@@ -14,27 +14,29 @@ namespace BMC.Aquascape
     {
         static void Main(string[] args)
         {
-
+            
             DS1307 jam = new DS1307();
             var nowDate = DateTime.Now;
             Console.WriteLine("date :"+nowDate);
-            jam.SetDateTime(nowDate);
-            Console.WriteLine(jam.GetDateTime().ToString());
-            ADS1115 analog = new ADS1115();
+            jam.SetDateAsync(nowDate).GetAwaiter().GetResult();
+            Console.WriteLine("TGL RTC:"+ jam.GetDateAsync().GetAwaiter().GetResult().ToString());
+            ADS1115Device analog = new ADS1115Device();
             var Relay1 = Pi.Gpio.Pin06;
             var Relay2 = Pi.Gpio.Pin13;
             var Limit1 = Pi.Gpio.Pin19;
             var Limit2 = Pi.Gpio.Pin26;
             var Relay1Status = true;
             var Relay2Status = true;
+            analog.Start();
 
             while (true)
             {
                 
                 for (int i = 0; i < 4; i++)
                 {
+                    Console.WriteLine($"A{i} = {analog.ReadRaw(i)}");
                     //Console.WriteLine($"A{i} = " + analog.Read(i));
-                    Console.WriteLine($"A{i} = {analog.ReadADC(16, i)}");
+                    //Console.WriteLine($"A{i} = {analog.ReadADC(16, i)}");
                 }
                 WriteDigital(Relay1, Relay1Status);
                 WriteDigital(Relay2, Relay2Status);
