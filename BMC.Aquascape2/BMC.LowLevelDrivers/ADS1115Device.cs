@@ -31,18 +31,16 @@ namespace BMC.LowLevelDrivers
         private readonly byte _channelsToReport;
         private Timer _ads1115Timer;
 
-        public ADS1115Device()
+        public ADS1115Device(byte channelsToReport)
         {
             datas = new int[4];
             for(int i = 0; i < 4; i++)
             {
                 datas[i] = 0;
             }
-            //_channelsToReport = channelsToReport;
+            _channelsToReport = channelsToReport;
             I2CBus i2cBus = new Mono.Linux.I2C.I2CBus(0x01);
-
             this._ads1115 = new Mono.Linux.I2C.I2CDevice(i2cBus, GetAddress(false, false));
-
             this.disposed = false;
             this.read = new byte[1];
             this.write = new byte[1];
@@ -62,8 +60,6 @@ namespace BMC.LowLevelDrivers
             //ThreadPoolTimer.CreatePeriodicTimer(ads1115_tick, TimeSpan.FromMilliseconds(250));
         }
 
-      
-
         private void ads1115_tick(object sender, ElapsedEventArgs e)
         {
             StartReading();
@@ -71,13 +67,21 @@ namespace BMC.LowLevelDrivers
 
         private void StartReading()
         {
-            for (byte channel = 0; channel < 3; channel++)
+            try
             {
-                //if (_channelsToReport.FlagIsTrue(channel, false))
+                for (byte channel = 0; channel < 3; channel++)
                 {
-                    ReadChannel(channel);
+                    //if (_channelsToReport.FlagIsTrue(channel, false))
+                    {
+                        ReadChannel(channel);
+                    }
                 }
             }
+            catch(Exception ex)
+            {
+                Console.WriteLine("reading error:"+ex);
+            }
+            
         }
 
         public int ReadRaw(int channel)

@@ -44,21 +44,20 @@
     <Compile Include="ADS1115.cs" />
     <Compile Include="ADS1115Device.cs" />
     <Compile Include="ADS1115_Constants.cs" />
+    <Compile Include="ADS1x15.cs" />
+    <Compile Include="ADS7830.cs" />
     <Compile Include="Bcd.cs" />
     <Compile Include="ByteExtensions.cs" />
     <Compile Include="ChannelReadingDone.cs" />
     <Compile Include="DS1307.cs" />
     <Compile Include="IADS1115Device.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TempSensor.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Mono.Linux.I2C\Mono.Linux.I2C.csproj">
       <Project>{b70915ea-3f00-492d-8011-e01b746dd050}</Project>
       <Name>Mono.Linux.I2C</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Unosquare.RaspberryIO\Unosquare.RaspberryIO.csproj">
-      <Project>{650264a9-4e1e-49a8-9c4e-3268fff7257a}</Project>
-      <Name>Unosquare.RaspberryIO</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
