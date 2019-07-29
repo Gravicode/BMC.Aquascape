@@ -4,6 +4,8 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
+using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -23,10 +25,38 @@ namespace BMC.Aquascape
         static IGpioPin Limit2;
         static bool Relay1Status;
         static bool Relay2Status;
+
+        private static string[] _dataInLora;
+        private static string rx;
+        static SimpleSerial UART = null;
+        static void PrintToLcd(string Message)
+        {
+            Console.WriteLine($"{DateTime.Now.ToString("dd/MM/yy HH:mm:ss")} >> {Message}");
+        }
+
         static void Main(string[] args)
         {
             try
             {
+                #region lora
+                string SerialPortName = ConfigurationManager.AppSettings["Port"];
+                UART = new SimpleSerial(SerialPortName, 57600);
+                UART.ReadTimeout = 0;
+                /*
+                UART.ReadBufferSize = 1024;
+                UART.WriteBufferSize = 1024;
+                UART.BaudRate = 38400;
+                UART.DataBits = 8;
+                UART.Parity = Parity.None;
+                UART.StopBits = StopBits.One;
+                */
+                UART.DataReceived += UART_DataReceived;
+                Console.WriteLine("57600");
+                Console.WriteLine("RN2483 Test");
+
+                var reset = Pi.Gpio[BcmPin.Gpio06]; //pin 6 
+                var reset2 =  Pi.Gpio[BcmPin.Gpio06]; //pin 3
+                #endregion
 
                 Pi.Init<BootstrapWiringPi>();
                 Console.WriteLine(">> Init mqtt");
@@ -58,6 +88,46 @@ namespace BMC.Aquascape
                 {
                     Console.WriteLine($">> channel {e.Channel} : {e.RawValue}"); 
                 };*/
+                #region lora
+                reset.Write(true);
+                reset2.Write(true);
+
+                Thread.Sleep(100);
+                reset.Write(false);
+                reset2.Write(false);
+
+                Thread.Sleep(100);
+                reset.Write(true);
+                reset2.Write(true);
+
+                Thread.Sleep(100);
+
+                waitForResponse();
+
+                sendCmd("sys factoryRESET");
+                sendCmd("sys get hweui");
+                sendCmd("mac get deveui");
+
+                // For TTN
+                sendCmd("mac set devaddr AAABBBEE");  // Set own address
+                Thread.Sleep(1000);
+                sendCmd("mac set appskey 2B7E151628AED2A6ABF7158809CF4F3D");
+                Thread.Sleep(1000);
+
+                sendCmd("mac set nwkskey 2B7E151628AED2A6ABF7158809CF4F3D");
+                Thread.Sleep(1000);
+
+                sendCmd("mac set adr off");
+                Thread.Sleep(1000);
+
+                sendCmd("mac set rx2 3 868400000");//869525000
+                Thread.Sleep(1000);
+
+                sendCmd("mac join abp");
+                sendCmd("mac get status");
+                sendCmd("mac get devaddr");
+                Thread.Sleep(1000);
+                #endregion
                 while (true)
                 {
                     /*
@@ -77,7 +147,27 @@ namespace BMC.Aquascape
                     Console.WriteLine($"Limit 2: {sensor.LimitSwitch2}");
                     Console.WriteLine($"Temp: {sensor.Temp}");
                     mqtt.PublishMessage(JsonConvert.SerializeObject(sensor));
-                   
+                    #region lora
+                    var jsonStr = JsonConvert.SerializeObject(sensor);
+                    Debug.Print("kirim :" + jsonStr);
+                    //PrintToLcd("send count: " + counter);
+                    sendData(jsonStr);
+                    Thread.Sleep(INTERVAL);
+                    byte[] rx_data = new byte[20];
+
+                    if (UART.BytesToRead > 0)
+                    {
+                        var count = UART.Read(rx_data, 0, rx_data.Length);
+                        if (count > 0)
+                        {
+                            Debug.Print("count:" + count);
+                            var hasil = new string(System.Text.Encoding.UTF8.GetChars(rx_data));
+                            Debug.Print("read:" + hasil);
+
+                            //mac_rx 2 AABBCC
+                        }
+                    }
+                    #endregion
                     Thread.Sleep(INTERVAL);
                 }
             }
@@ -132,10 +222,7 @@ namespace BMC.Aquascape
                 //return new MethodResponse(Encoding.UTF8.GetBytes(result), 400);
             }
         }
-
-
-
-
+        
         /// <summary>
         /// Write the given value to the given pin.
         /// </summary>
@@ -162,7 +249,187 @@ namespace BMC.Aquascape
 
             return gpioPin.Read() == true;
         }
+
+        #region lora
+        static void UART_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+
+            _dataInLora = UART.Deserialize();
+            for (int index = 0; index < _dataInLora.Length; index++)
+            {
+                rx = _dataInLora[index];
+                //if error
+                if (_dataInLora[index].Length > 5)
+                {
+
+                    //if receive data
+                    if (rx.Substring(0, 6) == "mac_rx")
+                    {
+                        string hex = _dataInLora[index].Substring(9);
+
+                        //update display
+                      
+                        byte[] data = StringToByteArrayFastest(hex);
+                        string decoded = new String(UTF8Encoding.UTF8.GetChars(data));
+                        Debug.Print("decoded:" + decoded);
+
+                    }
+                }
+            }
+            Debug.Print(rx);
+        }
+        public static byte[] StringToByteArrayFastest(string hex)
+        {
+            if (hex.Length % 2 == 1)
+                throw new Exception("The binary key cannot have an odd number of digits");
+
+            byte[] arr = new byte[hex.Length >> 1];
+
+            for (int i = 0; i < hex.Length >> 1; ++i)
+            {
+                arr[i] = (byte)((GetHexVal(hex[i << 1]) << 4) + (GetHexVal(hex[(i << 1) + 1])));
+            }
+
+            return arr;
+        }
+        public static int GetHexVal(char hex)
+        {
+            int val = (int)hex;
+            //For uppercase A-F letters:
+            return val - (val < 58 ? 48 : 55);
+            //For lowercase a-f letters:
+            //return val - (val < 58 ? 48 : 87);
+            //Or the two combined, but a bit slower:
+            //return val - (val < 58 ? 48 : (val < 97 ? 55 : 87));
+        }
+        static void sendCmd(string cmd)
+        {
+            byte[] rx_data = new byte[20];
+            Debug.Print(cmd);
+            Debug.Print("\n");
+            // flush all data
+            //UART.Flush();
+            // send some data
+            var tx_data = Encoding.UTF8.GetBytes(cmd);
+            UART.Write(tx_data, 0, tx_data.Length);
+            tx_data = Encoding.UTF8.GetBytes("\r\n");
+            UART.Write(tx_data, 0, tx_data.Length);
+            Thread.Sleep(100);
+            while (!UART.IsOpen)
+            {
+                UART.Open();
+                Thread.Sleep(100);
+            }
+            if (UART.BytesToRead>0)
+            {
+                var count = UART.Read(rx_data, 0, rx_data.Length);
+                if (count > 0)
+                {
+                    Debug.Print("count cmd:" + count);
+                    var hasil = new string(System.Text.Encoding.UTF8.GetChars(rx_data));
+                    Debug.Print("read cmd:" + hasil);
+                }
+            }
+        }
+        static void waitForResponse()
+        {
+            byte[] rx_data = new byte[20];
+
+            while (!UART.IsOpen)
+            {
+                UART.Open();
+                Thread.Sleep(100);
+            }
+            if (UART.BytesToRead>0)
+            {
+                var count = UART.Read(rx_data, 0, rx_data.Length);
+                if (count > 0)
+                {
+                    Debug.Print("count res:" + count);
+                    var hasil = new string(System.Text.Encoding.UTF8.GetChars(rx_data));
+                    Debug.Print("read res:" + hasil);
+                }
+
+            }
+        }
+        public static string Unpack(string input)
+        {
+            byte[] b = new byte[input.Length / 2];
+
+            for (int i = 0; i < input.Length; i += 2)
+            {
+                b[i / 2] = (byte)((FromHex(input[i]) << 4) | FromHex(input[i + 1]));
+            }
+            return new string(Encoding.UTF8.GetChars(b));
+        }
+        public static int FromHex(char digit)
+        {
+            if ('0' <= digit && digit <= '9')
+            {
+                return (int)(digit - '0');
+            }
+
+            if ('a' <= digit && digit <= 'f')
+                return (int)(digit - 'a' + 10);
+
+            if ('A' <= digit && digit <= 'F')
+                return (int)(digit - 'A' + 10);
+
+            throw new ArgumentException("digit");
+        }
+        static char getHexHi(char ch)
+        {
+            int nibbleInt = ch >> 4;
+            char nibble = (char)nibbleInt;
+            int res = (nibble > 9) ? nibble + 'A' - 10 : nibble + '0';
+            return (char)res;
+        }
+        static char getHexLo(char ch)
+        {
+            int nibbleInt = ch & 0x0f;
+            char nibble = (char)nibbleInt;
+            int res = (nibble > 9) ? nibble + 'A' - 10 : nibble + '0';
+            return (char)res;
+        }
+        static void sendData(string msg)
+        {
+            byte[] rx_data = new byte[20];
+            char[] data = msg.ToCharArray();
+            Debug.Print("mac tx uncnf 1 ");
+            var tx_data = Encoding.UTF8.GetBytes("mac tx uncnf 1 ");
+            UART.Write(tx_data, 0, tx_data.Length);
+
+            // Write data as hex characters
+            foreach (char ptr in data)
+            {
+                tx_data = Encoding.UTF8.GetBytes(new string(new char[] { getHexHi(ptr) }));
+                UART.Write(tx_data, 0, tx_data.Length);
+                tx_data = Encoding.UTF8.GetBytes(new string(new char[] { getHexLo(ptr) }));
+                UART.Write(tx_data, 0, tx_data.Length);
+
+
+                Debug.Print(new string(new char[] { getHexHi(ptr) }));
+                Debug.Print(new string(new char[] { getHexLo(ptr) }));
+            }
+            tx_data = Encoding.UTF8.GetBytes("\r\n");
+            UART.Write(tx_data, 0, tx_data.Length);
+            Debug.Print("\n");
+            Thread.Sleep(5000);
+
+            if (UART.BytesToRead > 0)
+            {
+                var count = UART.Read(rx_data, 0, rx_data.Length);
+                if (count > 0)
+                {
+                    Debug.Print("count after:" + count);
+                    var hasil = new string(System.Text.Encoding.UTF8.GetChars(rx_data));
+                    Debug.Print("read after:" + hasil);
+                }
+            }
+        }
+        #endregion
+
     }
 
-    
+
 }

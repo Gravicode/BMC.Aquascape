@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6E8E1680-96FB-4F77-B069-242182103F29}</ProjectGuid>
+    <ProjectGuid>{0735D729-43F9-4FC4-9837-27A0DCCF7E2C}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>BMC.Aquascape</RootNamespace>
-    <AssemblyName>BMC.Aquascape</AssemblyName>
+    <RootNamespace>BMC.AquascapeLoraGateway</RootNamespace>
+    <AssemblyName>BMC.AquascapeLoraGateway</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -33,52 +33,22 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Comfile.ComfilePi">
-      <HintPath>..\Libs\Comfile.ComfilePi.dll</HintPath>
-    </Reference>
-    <Reference Include="M2Mqtt.Net, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\M2Mqtt.4.3.0.0\lib\net45\M2Mqtt.Net.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="Unosquare.Raspberry.Abstractions, Version=0.2.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unosquare.Raspberry.Abstractions.0.2.2\lib\netstandard1.3\Unosquare.Raspberry.Abstractions.dll</HintPath>
-    </Reference>
-    <Reference Include="Unosquare.RaspberryIO, Version=0.18.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unosquare.Raspberry.IO.0.18.1\lib\netstandard2.0\Unosquare.RaspberryIO.dll</HintPath>
-    </Reference>
-    <Reference Include="Unosquare.RaspberryIO.Peripherals, Version=0.2.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unosquare.RaspberryIO.Peripherals.0.2.4\lib\netstandard2.0\Unosquare.RaspberryIO.Peripherals.dll</HintPath>
-    </Reference>
-    <Reference Include="Unosquare.Swan, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unosquare.Swan.0.37.0\lib\net452\Unosquare.Swan.dll</HintPath>
-    </Reference>
-    <Reference Include="Unosquare.Swan.Lite, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unosquare.Swan.Lite.0.39.0\lib\net452\Unosquare.Swan.Lite.dll</HintPath>
-    </Reference>
-    <Reference Include="Unosquare.WiringPi, Version=0.2.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Unosquare.WiringPi.0.2.4\lib\netstandard2.0\Unosquare.WiringPi.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MqttService.cs" />
+    <Compile Include="ObjMoteTx.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SimpleSerial.cs">
-      <SubType>Component</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -88,10 +58,6 @@
     <ProjectReference Include="..\BMC.Aquascape.Model\BMC.Aquascape.Model.csproj">
       <Project>{bc018b87-7367-49dd-95e5-9a7565843d98}</Project>
       <Name>BMC.Aquascape.Model</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\BMC.LowLevelDrivers\BMC.LowLevelDrivers.csproj">
-      <Project>{97f3dbe3-87d6-479c-b609-90ce97fa2ec3}</Project>
-      <Name>BMC.LowLevelDrivers</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
