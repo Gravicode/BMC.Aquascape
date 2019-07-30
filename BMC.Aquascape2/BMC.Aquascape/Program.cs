@@ -38,18 +38,19 @@ namespace BMC.Aquascape
         {
             try
             {
+                /*
                 #region lora
                 string SerialPortName = ConfigurationManager.AppSettings["Port"];
                 UART = new SimpleSerial(SerialPortName, 57600);
                 UART.ReadTimeout = 0;
-                /*
-                UART.ReadBufferSize = 1024;
-                UART.WriteBufferSize = 1024;
-                UART.BaudRate = 38400;
-                UART.DataBits = 8;
-                UART.Parity = Parity.None;
-                UART.StopBits = StopBits.One;
-                */
+                
+                //UART.ReadBufferSize = 1024;
+                //UART.WriteBufferSize = 1024;
+                //UART.BaudRate = 38400;
+                //UART.DataBits = 8;
+                //UART.Parity = Parity.None;
+                //UART.StopBits = StopBits.One;
+                
                 UART.DataReceived += UART_DataReceived;
                 Console.WriteLine("57600");
                 Console.WriteLine("RN2483 Test");
@@ -57,7 +58,7 @@ namespace BMC.Aquascape
                 var reset = Pi.Gpio[BcmPin.Gpio06]; //pin 6 
                 var reset2 =  Pi.Gpio[BcmPin.Gpio06]; //pin 3
                 #endregion
-
+                */
                 Pi.Init<BootstrapWiringPi>();
                 Console.WriteLine(">> Init mqtt");
                 MqttService mqtt = new MqttService();
@@ -88,6 +89,7 @@ namespace BMC.Aquascape
                 {
                     Console.WriteLine($">> channel {e.Channel} : {e.RawValue}"); 
                 };*/
+                /*
                 #region lora
                 reset.Write(true);
                 reset2.Write(true);
@@ -128,6 +130,7 @@ namespace BMC.Aquascape
                 sendCmd("mac get devaddr");
                 Thread.Sleep(1000);
                 #endregion
+                */
                 while (true)
                 {
                     /*
@@ -147,6 +150,7 @@ namespace BMC.Aquascape
                     Console.WriteLine($"Limit 2: {sensor.LimitSwitch2}");
                     Console.WriteLine($"Temp: {sensor.Temp}");
                     mqtt.PublishMessage(JsonConvert.SerializeObject(sensor));
+                    /*
                     #region lora
                     var jsonStr = JsonConvert.SerializeObject(sensor);
                     Debug.Print("kirim :" + jsonStr);
@@ -168,6 +172,7 @@ namespace BMC.Aquascape
                         }
                     }
                     #endregion
+                    */
                     Thread.Sleep(INTERVAL);
                 }
             }
